@@ -1,30 +1,44 @@
 import asyncio
 import discord
 import os
+import json
+
+import users
 
 token = os.environ['discord_token']
+google_spreadsheet_key = os.environ['google_spreadsheet_key']
 client = discord.Client()
+
+Users = users.Users(google_spreadsheet_key)
+
 
 @client.event
 async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
+    print(int(client.user.id))
     print('------')
+
 
 @client.event
 async def on_message(message):
-    if message.content.startswith('!test'):
-        counter = 0
-        tmp = await client.send_message(message.channel, 'Calculating messages...')
-        async for log in client.logs_from(message.channel, limit=100):
-            if log.author == message.author:
-                counter += 1
+    # we do not want the bot to reply to itself
+    if message.author == client.user:
+        return
 
-        await client.edit_message(tmp, 'You have {} messages.'.format(counter))
-    elif message.content.startswith('!sleep'):
-        await asyncio.sleep(5)
-        await client.send_message(message.channel, 'Done sleeping')
+    # increase exp for public chat
+    if not message.channel.is_private:
+        Users.increase_value(message.author, "exp", len(message.content))
+        Users.check_level_up(message.author)
+
+    # response with user information
+    if message.channel.is_private:
+        user_info = Users.get(message.author)
+        await client.send_message(message.channel, json.dumps(user_info))
+
+    # save current progress into storage
+    if message.content.startswith('!save'):
+        Users.write()
 
 client.run(token)
-
