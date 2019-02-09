@@ -43,4 +43,16 @@ async def on_message(message):
     if message.content.startswith('!save'):
         Users.write()
 
+
+@client.event
+async def on_message_delete(message):
+    # ignore action if happens in private channel
+    if message.channel.is_private:
+        return
+
+    # decrease user points by 1 when delete message
+    Users.increase_value(message.author, "points", -1)
+    Users.write()
+
+
 client.run(token)
