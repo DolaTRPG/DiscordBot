@@ -20,8 +20,10 @@ class Storage:
         }
         self._client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(keyfile_dict, scope))
         self._spreadsheet_key = spreadsheet_key
-        self._spreadsheet = self._client.open_by_key(self._spreadsheet_key)
         self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"]
+
+    def _get_spreadsheet(self):
+        return self._client.open_by_key(self._spreadsheet_key)
 
     def _find_latest_worksheet_name(self, keyword):
         """find last worksheet with keyword
@@ -30,7 +32,8 @@ class Storage:
         Return:
             (str) worksheet name (e.g. user_20190101_123456)
         """
-        worksheets = self._spreadsheet.worksheets()
+        spreadsheet = self._get_spreadsheet()
+        worksheets = spreadsheet.worksheets()
         matched_worksheet_names = [ws.title for ws in worksheets if keyword in ws.title]
         matched_worksheet_names.sort(reverse=True)
         return matched_worksheet_names[0]
@@ -47,7 +50,8 @@ class Storage:
                     ...
                 ]
         """
-        worksheet = self._spreadsheet.worksheet(sheet_name)
+        spreadsheet = self._get_spreadsheet()
+        worksheet = spreadsheet.worksheet(sheet_name)
         return worksheet.get_all_values()
 
     def _create_worksheet(self, sheet_name, row_count, column_count):
@@ -57,7 +61,8 @@ class Storage:
             (int) row_count -- number of rows
             (int) column_count -- number of columns
         """
-        worksheet = self._spreadsheet.add_worksheet(title=sheet_name, rows=str(row_count), cols=str(column_count))
+        spreadsheet = self._get_spreadsheet()
+        worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=str(row_count), cols=str(column_count))
         return worksheet
 
     def _write_worksheet(self, sheet_name, rows):
@@ -66,7 +71,8 @@ class Storage:
             (str) sheet_name -- name of worksheet (e.g. users_new)
             (list) rows -- rows to write to worksheet
         """
-        worksheet = self._spreadsheet.worksheet(sheet_name)
+        spreadsheet = self._get_spreadsheet()
+        worksheet = spreadsheet.worksheet(sheet_name)
         for row in rows:
             worksheet.insert_row(row)
         worksheet.insert_row(self._users_columns, value_input_option='USER_ENTERED')
