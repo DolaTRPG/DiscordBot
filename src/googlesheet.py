@@ -20,28 +20,27 @@ class Storage:
         }
         self._client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(keyfile_dict, scope))
         self._spreadsheet_key = spreadsheet_key
+        self._worksheet_name = "users"
         self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"]
 
     def _get_spreadsheet(self):
+        """get spreadsheet from google
+        Return:
+            (spreadsheet) spreadsheet class
+        """
         return self._client.open_by_key(self._spreadsheet_key)
 
-    def _find_latest_worksheet_name(self, keyword):
-        """find last worksheet with keyword
-        Args:
-            (str) keyword -- keyword for worksheet
+    def _get_worksheet(self):
+        """get worksheet from google
         Return:
-            (str) worksheet name (e.g. user_20190101_123456)
+            (worksheet) worksheet class
         """
         spreadsheet = self._get_spreadsheet()
-        worksheets = spreadsheet.worksheets()
-        matched_worksheet_names = [ws.title for ws in worksheets if keyword in ws.title]
-        matched_worksheet_names.sort(reverse=True)
-        return matched_worksheet_names[0]
+        worksheet = spreadsheet.worksheet(self._worksheet_name)
+        return worksheet
 
-    def _read_worksheet(self, sheet_name):
+    def _read_worksheet(self):
         """get all rows from worksheet
-        Args:
-            (str) sheet_name -- name of worksheet (e.g. users)
         Return:
             (list) documents
                 [
@@ -50,29 +49,34 @@ class Storage:
                     ...
                 ]
         """
-        spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.worksheet(sheet_name)
+        worksheet = self._get_worksheet()
         return worksheet.get_all_values()
 
-    def _create_worksheet(self, sheet_name, row_count, column_count):
+    def _delete_worksheet(self):
+        """delete existed worksheet
+        Return:
+            (None)
+        """
+        spreadsheet = self._get_spreadsheet()
+        worksheet = self._get_worksheet()
+        spreadsheet.del_worksheet(worksheet)
+
+    def _create_worksheet(self, row_count, column_count):
         """create empty worksheet
         Args:
-            (str) sheet_name -- name of worksheet (e.g. user_new)
             (int) row_count -- number of rows
             (int) column_count -- number of columns
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=str(row_count), cols=str(column_count))
+        worksheet = spreadsheet.add_worksheet(title=self._worksheet_name, rows=str(row_count), cols=str(column_count))
         return worksheet
 
-    def _write_worksheet(self, sheet_name, rows):
+    def _write_worksheet(self, rows):
         """write rows into worksheet
         Args:
-            (str) sheet_name -- name of worksheet (e.g. users_new)
             (list) rows -- rows to write to worksheet
         """
-        spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.worksheet(sheet_name)
+        worksheet = self._get_worksheet()
         for row in rows:
             worksheet.insert_row(row)
         worksheet.insert_row(self._users_columns, value_input_option='USER_ENTERED')
@@ -93,8 +97,7 @@ class Storage:
                     }
                 ]
         """
-        worksheet_name = self._find_latest_worksheet_name('users')
-        rows = self._read_worksheet(worksheet_name)
+        rows = self._read_worksheet()
         users = []
         for row in rows[1:]:
             user = {}
@@ -122,13 +125,12 @@ class Storage:
                     }
                 ]
         Return:
-            (str) output worksheet name
+            (None)
         """
         output_users = self._convert_users_into_list(users)
-        sheet_name = "users_{}".format(time.strftime("%Y%m%d_%H%M%S"))
-        self._create_worksheet(sheet_name=sheet_name, row_count=len(output_users), column_count=len(self._users_columns))
-        self._write_worksheet(sheet_name=sheet_name, rows=output_users)
-        return sheet_name
+        self._delete_worksheet()
+        self._create_worksheet(len(output_users), len(self._users_columns))
+        self._write_worksheet(rows=output_users)
 
     def _convert_users_into_list(self, users):
         """convert users into list for sheet output
