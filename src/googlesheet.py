@@ -5,8 +5,8 @@ import time
 
 class Storage:
     def __init__(self, spreadsheet_key):
-        scope = ['https://spreadsheets.google.com/feeds']
-        keyfile_dict = {
+        self._scope = ['https://spreadsheets.google.com/feeds']
+        self._keyfile_dict = {
             "type": "service_account",
             "project_id": "discordbot-230408",
             "private_key_id": "a03989e44342f576c115ac3006888ea929a943ac",
@@ -18,7 +18,6 @@ class Storage:
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/discordbot%40discordbot-230408.iam.gserviceaccount.com"
         }
-        self._client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(keyfile_dict, scope))
         self._spreadsheet_key = spreadsheet_key
         self._worksheet_name = "users"
         self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"]
@@ -28,7 +27,8 @@ class Storage:
         Return:
             (spreadsheet) spreadsheet class
         """
-        return self._client.open_by_key(self._spreadsheet_key)
+        client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(self._keyfile_dict, self._scope))
+        return client.open_by_key(self._spreadsheet_key)
 
     def _get_worksheet(self):
         """get worksheet from google
