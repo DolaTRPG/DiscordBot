@@ -85,6 +85,7 @@ class Users:
         upgrade_exp = random.randint(0, current_level * 100)
         if upgrade_exp < user["exp"]:
             self._level_up(discord_user)
+            self.write()
             return True
         return False
 
