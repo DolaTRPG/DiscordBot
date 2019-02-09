@@ -34,8 +34,10 @@ async def on_message(message):
 
     # response with user information
     if message.channel.is_private:
-        user_info = Users.get(message.author)
-        await client.send_message(message.channel, json.dumps(user_info))
+        if message.content == "點數":
+            user_info = Users.get(message.author)
+            response = "你目前的點數為：{}".format(user_info["points"])
+            await client.send_message(message.channel, response)
 
     # save current progress into storage
     if message.content.startswith('!save'):
