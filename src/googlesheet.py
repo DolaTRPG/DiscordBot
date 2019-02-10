@@ -19,7 +19,7 @@ class Storage:
             "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/discordbot%40discordbot-230408.iam.gserviceaccount.com"
         }
         self._spreadsheet_key = spreadsheet_key
-        self._worksheet_name = "users"
+        self._users_worksheet_name = "users"
         self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"]
 
     def _get_spreadsheet(self):
@@ -30,17 +30,21 @@ class Storage:
         client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(self._keyfile_dict, self._scope))
         return client.open_by_key(self._spreadsheet_key)
 
-    def _get_worksheet(self):
+    def _get_worksheet(self, worksheet_name):
         """get worksheet from google
+        Args:
+            (str) worksheet name
         Return:
             (worksheet) worksheet class
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.worksheet(self._worksheet_name)
+        worksheet = spreadsheet.worksheet(worksheet_name)
         return worksheet
 
-    def _read_worksheet(self):
+    def _read_worksheet(self, worksheet_name):
         """get all rows from worksheet
+        Args:
+            (str) worksheet name
         Return:
             (list) documents
                 [
@@ -49,34 +53,37 @@ class Storage:
                     ...
                 ]
         """
-        worksheet = self._get_worksheet()
+        worksheet = self._get_worksheet(worksheet_name)
         return worksheet.get_all_values()
 
-    def _delete_worksheet(self):
+    def _delete_worksheet(self, worksheet_name):
         """delete existed worksheet
+        Args:
+            (str) worksheet name
         Return:
             (None)
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = self._get_worksheet()
+        worksheet = self._get_worksheet(worksheet_name)
         spreadsheet.del_worksheet(worksheet)
 
-    def _create_worksheet(self, row_count, column_count):
+    def _create_worksheet(self, worksheet_name, column_count):
         """create empty worksheet
         Args:
-            (int) row_count -- number of rows
+            (str) worksheet name
             (int) column_count -- number of columns
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.add_worksheet(title=self._worksheet_name, rows=str(row_count), cols=str(column_count))
+        worksheet = spreadsheet.add_worksheet(title=worksheet_name, rows="1", cols=str(column_count))
         return worksheet
 
-    def _write_worksheet(self, rows):
+    def _write_worksheet(self, worksheet_name, rows):
         """write rows into worksheet
         Args:
+            (str) worksheet name
             (list) rows -- rows to write to worksheet
         """
-        worksheet = self._get_worksheet()
+        worksheet = self._get_worksheet(worksheet_name)
         for row in rows:
             worksheet.insert_row(row)
         worksheet.insert_row(self._users_columns, value_input_option='USER_ENTERED')
@@ -97,7 +104,7 @@ class Storage:
                     }
                 ]
         """
-        rows = self._read_worksheet()
+        rows = self._read_worksheet(self._users_worksheet_name)
         users = []
         for row in rows[1:]:
             user = {}
@@ -128,9 +135,9 @@ class Storage:
             (None)
         """
         output_users = self._convert_users_into_list(users)
-        self._delete_worksheet()
-        self._create_worksheet(len(output_users), len(self._users_columns))
-        self._write_worksheet(rows=output_users)
+        self._delete_worksheet(self._users_worksheet_name)
+        self._create_worksheet(self._users_worksheet_name, len(self._users_columns))
+        self._write_worksheet(self._users_worksheet_name, rows=output_users)
 
     def _convert_users_into_list(self, users):
         """convert users into list for sheet output
