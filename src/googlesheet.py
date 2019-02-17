@@ -134,37 +134,34 @@ class Storage:
         Return:
             (None)
         """
-        output_users = self._convert_users_into_list(users)
+        output_users = self._convert_records_into_list(users, self._users_columns)
         self._delete_worksheet(self._users_worksheet_name)
         self._create_worksheet(self._users_worksheet_name, len(self._users_columns))
         self._write_worksheet(self._users_worksheet_name, rows=output_users)
 
-    def _convert_users_into_list(self, users):
-        """convert users into list for sheet output
+    def _convert_records_into_list(self, records, columns):
+        """convert records into sheet output format
         Args:
-            (list) users
+            (list) records
                 [
                     {
                         "user_id": 0,
                         "points": 10,
-                        "gm": 10,
-                        "player": 3,
-                        "points_used": 100,
-                        "points_earned": 100,
-                        "exp": 0
-                    }
+                        ...
+                    },
+                    ...
                 ]
         Returns:
-            (list) users
+            (list) output format for google sheet
                 [
-                    ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"],
+                    [0, 10, ...],
                     ...
                 ]
         """
         rows = []
-        for user in users:
+        for record in records:
             row = []
-            for column in self._users_columns:
-                row.append(str(user[column]))
+            for column in columns:
+                row.append(str(record[column]))
             rows.append(row)
         return rows
