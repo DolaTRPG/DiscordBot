@@ -1,10 +1,9 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import time
 
 
 class Storage:
-    def __init__(self, spreadsheet_key):
+    def __init__(self, spreadsheet_key, worksheet_name, columns):
         self._scope = ['https://spreadsheets.google.com/feeds']
         self._keyfile_dict = {
             "type": "service_account",
@@ -19,8 +18,8 @@ class Storage:
             "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/discordbot%40discordbot-230408.iam.gserviceaccount.com"
         }
         self._spreadsheet_key = spreadsheet_key
-        self._users_worksheet_name = "users"
-        self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned", "last_activity"]
+        self._worksheet_name = worksheet_name
+        self._columns = columns
 
     def _get_spreadsheet(self):
         """get spreadsheet from google
@@ -30,21 +29,17 @@ class Storage:
         client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(self._keyfile_dict, self._scope))
         return client.open_by_key(self._spreadsheet_key)
 
-    def _get_worksheet(self, worksheet_name):
+    def _get_worksheet(self):
         """get worksheet from google
-        Args:
-            (str) worksheet name
         Return:
             (worksheet) worksheet class
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.worksheet(worksheet_name)
+        worksheet = spreadsheet.worksheet(self._worksheet_name)
         return worksheet
 
-    def _read_worksheet(self, worksheet_name):
+    def _read_worksheet(self):
         """get all rows from worksheet
-        Args:
-            (str) worksheet name
         Return:
             (list) documents
                 [
@@ -53,91 +48,66 @@ class Storage:
                     ...
                 ]
         """
-        worksheet = self._get_worksheet(worksheet_name)
+        worksheet = self._get_worksheet()
         return worksheet.get_all_values()
 
-    def _delete_worksheet(self, worksheet_name):
+    def _delete_worksheet(self):
         """delete existed worksheet
-        Args:
-            (str) worksheet name
         Return:
             (None)
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = self._get_worksheet(worksheet_name)
+        worksheet = self._get_worksheet()
         spreadsheet.del_worksheet(worksheet)
 
-    def _create_worksheet(self, worksheet_name, column_count):
+    def _create_worksheet(self):
         """create empty worksheet
-        Args:
-            (str) worksheet name
-            (int) column_count -- number of columns
+        Return:
+            (worksheet) created worksheet
         """
         spreadsheet = self._get_spreadsheet()
-        worksheet = spreadsheet.add_worksheet(title=worksheet_name, rows="1", cols=str(column_count))
+        worksheet = spreadsheet.add_worksheet(title=self._worksheet_name, rows="1", cols=str(len(self._columns)))
         return worksheet
 
-    def _write_worksheet(self, worksheet_name, rows):
+    def _write_worksheet(self, data_rows):
         """write rows into worksheet
         Args:
-            (str) worksheet name
-            (list) rows -- rows to write to worksheet
+            (list) data_rows -- data to write to worksheet
         """
-        worksheet = self._get_worksheet(worksheet_name)
-        for row in rows:
+        worksheet = self._get_worksheet()
+        for row in data_rows:
             worksheet.insert_row(row)
-        worksheet.insert_row(self._users_columns, value_input_option='USER_ENTERED')
+        # insert column header at last
+        worksheet.insert_row(self._columns, value_input_option='USER_ENTERED')
 
-    def read_users(self):
-        """get users from googlesheet storage
+    def read_data(self):
+        """get data from googlesheet
         Return:
-            (list) users
+            (list) data rows combined with header
                 [
-                    {
-                        "user_id": 0,
-                        "points": 10,
-                        "gm": 10,
-                        "player": 3,
-                        "points_used": 100,
-                        "points_earned": 100,
-                        "exp": 0
-                    }
+                    ["column1", "column2", ...],
+                    ...
                 ]
         """
-        rows = self._read_worksheet(self._users_worksheet_name)
-        users = []
-        for row in rows[1:]:
-            user = {}
-            for key, value in zip(self._users_columns, row):
-                try:
-                    user[key] = int(value)
-                except ValueError:
-                    user[key] = value
-            users.append(user)
-        return users
+        rows = self._read_worksheet()
+        return rows[1:]
 
-    def write_users(self, users):
-        """write users to googlesheet storage
+    def write_data(self, data_dicts):
+        """write data into googldsheet
         Args:
-            (list) users
+            (list) list of data in dict format
                 [
                     {
-                        "user_id": 0,
-                        "points": 10,
-                        "gm": 10,
-                        "player": 3,
-                        "points_used": 100,
-                        "points_earned": 100,
-                        "exp": 0
+                        "column1": "data1",
+                        "column2": "data2",
+                        ...
                     }
                 ]
-        Return:
-            (None)
         """
-        output_users = self._convert_records_into_list(users, self._users_columns)
-        self._delete_worksheet(self._users_worksheet_name)
-        self._create_worksheet(self._users_worksheet_name, len(self._users_columns))
-        self._write_worksheet(self._users_worksheet_name, rows=output_users)
+        parsed_data_rows = self._convert_records_into_list(data_dicts, self._columns)
+        self._delete_worksheet()
+        self._create_worksheet()
+        self._write_worksheet(parsed_data_rows)
 
     def _convert_records_into_list(self, records, columns):
         """convert records into sheet output format
@@ -145,8 +115,8 @@ class Storage:
             (list) records
                 [
                     {
-                        "user_id": 0,
-                        "points": 10,
+                        "column1": "data1",
+                        "column2": "data2",
                         ...
                     },
                     ...
@@ -154,7 +124,7 @@ class Storage:
         Returns:
             (list) output format for google sheet
                 [
-                    [0, 10, ...],
+                    ["data1", "data2", ...],
                     ...
                 ]
         """

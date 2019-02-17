@@ -6,8 +6,8 @@ import googlesheet
 
 class Users:
     def __init__(self, google_spreadsheet_key):
-        self._columns = ["user_id", "points", "gm", "player", "points_used", "points_earned", "exp"]
-        self._storage = googlesheet.Storage(google_spreadsheet_key)
+        self._columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned", "last_activity"]
+        self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
         print(self._users)
 
@@ -16,14 +16,23 @@ class Users:
         Return:
             (None)
         """
-        self._users = self._storage.read_users()
+        data_rows = self._storage.read_data()
+        self._users = []
+        for row in data_rows:
+            user = {}
+            for key, value in zip(self._columns, row):
+                try:
+                    user[key] = int(value)
+                except ValueError:
+                    user[key] = value
+            self._users.append(user)
 
     def write(self):
         """output users into DB
         Return:
             (str) output worksheet name (e.g. users_20190101_123456)
         """
-        worksheet_name = self._storage.write_users(self._users)
+        worksheet_name = self._storage.write_data(self._users)
         return worksheet_name
 
     def add(self, discord_user):
