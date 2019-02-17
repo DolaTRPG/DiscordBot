@@ -4,6 +4,7 @@ import os
 import json
 
 import users
+import log_horizon
 
 token = os.environ['discord_token']
 google_spreadsheet_key = os.environ['google_spreadsheet_key']
@@ -25,6 +26,14 @@ async def on_ready():
 async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
+        return
+
+    # temp test for log horizon
+    if message.content.startswith("lh"):
+        player_id = message.content.split(' ')[-1]
+        response = log_horizon.get_skills(player_id)
+        print(response)
+        await client.send_message(message.channel, response)
         return
 
     # increase exp for public chat
