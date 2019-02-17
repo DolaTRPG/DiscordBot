@@ -5,9 +5,9 @@ import googlesheet
 
 
 class Users:
-    def __init__(self, google_oauth_keyfile_dict):
+    def __init__(self, google_spreadsheet_key):
         self._columns = ["user_id", "points", "gm", "player", "points_used", "points_earned", "exp"]
-        self._storage = googlesheet.Storage(google_oauth_keyfile_dict)
+        self._storage = googlesheet.Storage(google_spreadsheet_key)
         self.read()
         print(self._users)
 
