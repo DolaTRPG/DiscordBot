@@ -20,7 +20,7 @@ class Storage:
         }
         self._spreadsheet_key = spreadsheet_key
         self._users_worksheet_name = "users"
-        self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned"]
+        self._users_columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned", "last_activity"]
 
     def _get_spreadsheet(self):
         """get spreadsheet from google

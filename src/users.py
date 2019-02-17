@@ -1,4 +1,6 @@
 import random
+import time
+
 import googlesheet
 
 
@@ -123,6 +125,8 @@ class Users:
         for user in self._users:
             if int(user['user_id']) == int(discord_user.id):
                 user[key] += value
+                user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
                 return user
-        user = self.add(discord_user)
-        return user
+        else:
+            user = self.add(discord_user)
+            return user
