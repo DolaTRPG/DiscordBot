@@ -31,8 +31,7 @@ async def on_message(message):
     # temp test for log horizon
     if message.content.startswith("lh"):
         player_id = message.content.split(' ')[-1]
-        response = log_horizon.get_skills(player_id)
-        print(response)
+        response = log_horizon.get_skill_macros(player_id)
         await client.send_message(message.channel, response)
         return
 
