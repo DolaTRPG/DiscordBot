@@ -75,6 +75,10 @@ class Users:
                     "exp": 0
                 }
         """
+        user_ids = [u['user_id'] for u in self._users]
+        if discord_user.id not in user_ids:
+            self.add(discord_user)
+
         for user in self._users:
             if user['user_id'] == int(discord_user.id):
                 return user
