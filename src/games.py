@@ -145,6 +145,7 @@ async def start(client, message, users):
         points_after = users.get(gm)['points']
         await send_direct_message(gm, "點數：{} -> {}".format(points_before, points_after))
         await message.edit(content=message.content + "\n（已開團）")
+        users.write()
 
 
 def parse_message(content, pattern):
