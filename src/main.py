@@ -8,10 +8,10 @@ import games
 
 token = os.environ['discord_token']
 google_spreadsheet_key = os.environ['google_spreadsheet_key']
+game_channel_id = int(os.environ['discord_game_channel_id'])
 client = discord.Client()
 
 Users = users.Users(google_spreadsheet_key)
-Games = games.Games(google_spreadsheet_key)
 busy_users = []
 
 
@@ -20,8 +20,14 @@ async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
-    print(int(client.user.id))
     print('------')
+
+
+@client.event
+async def on_raw_reaction_add(event):
+    if event.channel_id == game_channel_id:
+        message = await client.get_channel(event.channel_id).fetch_message(event.message_id)
+        await games.start(client, message, Users)
 
 
 @client.event
@@ -49,7 +55,7 @@ async def on_message(message):
             await message.channel.send(response)
 
         elif message.content == "開團":
-            await games.create(client, message)
+            await games.create(client, message, game_channel_id)
 
         else:
             response = "請輸入對應的指令：\n"
