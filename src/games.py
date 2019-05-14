@@ -45,9 +45,9 @@ async def create(client, message, game_channel_id):
     message = await client.wait_for('message', check=check_message)
     game["point"] = message.content
     try:
-        assert(int(game["point"]) > 0)
+        assert(int(game["point"]) >= 0)
     except:
-        await dm_channel.send("點數需求必須為正整數")
+        await dm_channel.send("點數需求必須 >= 0")
         await dm_channel.send("已取消")
         return
 
