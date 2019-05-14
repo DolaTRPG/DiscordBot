@@ -37,12 +37,12 @@ async def on_message(message):
         return
 
     # increase exp for public chat
-    if not message.channel.__class__.__name__ == "DMChannel":
+    if not is_channel_type(message.channel, "DMChannel"):
         Users.increase_value(message.author, "exp", len(message.content))
         Users.check_level_up(message.author)
 
-    # response with user information
-    if message.channel.__class__.__name__ == "DMChannel":
+    # reaction in direct message
+    if is_channel_type(message.channel, "DMChannel"):
         # avoid additional actions if user is already busy
         if message.author in busy_users:
             return
@@ -72,13 +72,24 @@ async def on_message(message):
 
 @client.event
 async def on_message_delete(message):
-    # ignore action if happens in private channel
-    if message.channel.is_private:
+    # ignore action if happens in direct message
+    if is_channel_type(message.channel, "DMChannel"):
         return
 
     # decrease user points by 1 when delete message
     Users.increase_value(message.author, "points", -1)
     Users.write()
+
+
+def is_channel_type(channel, class_name):
+    """check if channel is private
+    Args:
+        - (discord channel) channel class
+        - (str) class_name - discord class name (e.g. DMChannel)
+    """
+    if channel.__class__.__name__ == class_name:
+        return True
+    return False
 
 
 client.run(token)
