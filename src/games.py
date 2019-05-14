@@ -105,14 +105,18 @@ async def start(client, message, users):
     players.remove(client.user)
 
     if start_flag:
-        # sort player by points
-        players = sorted(players, key=lambda x: users.get(x)['points'], reverse=True)
-
         # filter player by gm setting
         game_title = parse_message(message.content, "劇本：(\w+)")
         game_points = int(parse_message(message.content, "開團時酌收 (\d+) 點跑團點數"))
         total_points = 0
         player_count = int(parse_message(message.content, "人數：(\d+)"))
+
+        # sort player by points
+        for p in players:
+            if users.get(p)['points'] < game_points:
+                await send_direct_message(p, "{} 的 {} 團報名截止，你因為點數不足而被移出玩家清單".format(gm.name, game_title))
+        players = [p for p in players if users.get(p)['points'] > game_points]
+        players = sorted(players, key=lambda p: users.get(p)['points'], reverse=True)
         players = players[:player_count]
 
         # check requirements
