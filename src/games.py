@@ -133,6 +133,8 @@ async def start(client, message, users):
         for p in players:
             await send_direct_message(p, "恭喜入選 {} 的 {} 團".format(gm.name, game_title))
             points_before = users.get(p)['points']
+            users.increase_value(p, 'player', 1)
+            users.increase_value(p, 'points_used', game_points)
             users.increase_value(p, 'points', 0 - game_points)
             points_after = users.get(p)['points']
             await send_direct_message(p, "點數：{} -> {}".format(points_before, points_after))
@@ -141,6 +143,8 @@ async def start(client, message, users):
         # send dm to gm
         await send_direct_message(gm, "開團成功，玩家：{}".format(",".join([p.name for p in players])))
         points_before = users.get(gm)['points']
+        users.increase_value(gm, 'gm', 1)
+        users.increase_value(gm, 'points_earned', game_points)
         users.increase_value(gm, 'points', game_points)
         points_after = users.get(gm)['points']
         await send_direct_message(gm, "點數：{} -> {}".format(points_before, points_after))
