@@ -127,7 +127,7 @@ async def start(client, message, users):
 
         # start successfully
         player_mentions = [p.mention for p in players]
-        await message.channel.send("恭喜 {} 入選 {} 的 {} 團".format(" ".join(player_mentions), gm.mention, game_title))
+        await message.channel.send("{} 的 {} 團已收團\n玩家：{}".format(gm.mention, game_title, " ".join(player_mentions)))
 
         # send dm to each players
         for p in players:
@@ -144,7 +144,7 @@ async def start(client, message, users):
         users.increase_value(gm, 'points', game_points)
         points_after = users.get(gm)['points']
         await send_direct_message(gm, "點數：{} -> {}".format(points_before, points_after))
-        await message.edit(content=message.content + "\n（已開團）")
+        await message.edit(content=message.content + "\n（已收團）")
         users.write()
 
 
