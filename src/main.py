@@ -70,6 +70,7 @@ async def on_message(message):
     # save current progress into storage
     if message.content.startswith('!save'):
         Users.write()
+        await message.channel.send("更新完成")
 
 
 @client.event
