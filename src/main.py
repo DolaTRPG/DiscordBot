@@ -8,7 +8,9 @@ import games
 
 token = os.environ['discord_token']
 google_spreadsheet_key = os.environ['google_spreadsheet_key']
+game_server_id = int(os.environ['discord_server_id'])
 game_channel_id = int(os.environ['discord_game_channel_id'])
+newcomer_role_name = os.environ['discord_newcomer_role_name']
 client = discord.Client()
 
 Users = users.Users(google_spreadsheet_key)
@@ -79,6 +81,13 @@ async def on_message_delete(message):
     # decrease user points by 1 when delete message
     Users.increase_value(message.author, "points", -1)
     Users.write()
+
+
+@client.event
+async def on_member_join(member):
+    server = client.get_guild(game_server_id)
+    role = discord.utils.get(server.roles, name=newcomer_role_name)
+    await member.add_roles(role)
 
 
 def is_channel_type(channel, class_name):
