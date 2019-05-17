@@ -55,6 +55,7 @@ async def on_message(message):
             user_info = Users.get(message.author)
             response = "你目前的點數為：{}".format(user_info["points"])
             await message.channel.send(response)
+            print("{} 查詢點數：{}".format(message.author.name, user_info["points"]))
 
         elif message.content == "開團":
             await games.create(client, message, game_channel_id)
