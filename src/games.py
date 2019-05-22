@@ -106,7 +106,7 @@ async def start(client, message, users):
 
     if start_flag:
         # filter player by gm setting
-        game_title = parse_message(message.content, "劇本：(\w+)")
+        game_title = parse_message(message.content, "劇本：(.+)\n")
         game_points = int(parse_message(message.content, "開團時酌收 (\d+) 點跑團點數"))
         total_points = 0
         player_count = int(parse_message(message.content, "人數：(\d+)"))
