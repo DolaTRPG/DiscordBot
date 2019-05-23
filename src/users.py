@@ -6,7 +6,7 @@ import googlesheet
 
 class Users:
     def __init__(self, google_spreadsheet_key):
-        self._columns = ["user_id", "name", "points", "exp", "gm", "points_earned", "player", "points_used", "last_activity"]
+        self._columns = ["id", "name", "points", "exp", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
         print(self._users)
@@ -42,7 +42,7 @@ class Users:
         Return:
             (dict) user information
                 {
-                    "user_id": 0,
+                    "id": 0,
                     "name": "username",
                     "points": 10,
                     "gm": 10,
@@ -55,7 +55,7 @@ class Users:
         user = {}
         for key in self._columns:
             user[key] = 0
-        user["user_id"] = int(discord_user.id)
+        user["id"] = int(discord_user.id)
         user["name"] = discord_user.name
         self._users.append(user)
         return user
@@ -68,7 +68,7 @@ class Users:
             (None) user not existed
             (dict) user information
                 {
-                    "user_id": 0,
+                    "id": 0,
                     "points": 10,
                     "gm": 10,
                     "player": 3,
@@ -77,12 +77,12 @@ class Users:
                     "exp": 0
                 }
         """
-        user_ids = [u['user_id'] for u in self._users]
-        if discord_user.id not in user_ids:
+        ids = [u['id'] for u in self._users]
+        if discord_user.id not in ids:
             self.add(discord_user)
 
         for user in self._users:
-            if user['user_id'] == int(discord_user.id):
+            if user['id'] == int(discord_user.id):
                 return user
         return None
 
@@ -114,7 +114,7 @@ class Users:
             (None)
         """
         for user in self._users:
-            if user["user_id"] == int(discord_user.id):
+            if user["id"] == int(discord_user.id):
                 user["points"] += 1
                 user["exp"] = 0
                 return
@@ -128,7 +128,7 @@ class Users:
         Return:
             (dict) user information
                 {
-                    "user_id": 0,
+                    "id": 0,
                     "points": 10,
                     "gm": 10,
                     "player": 3,
@@ -138,7 +138,7 @@ class Users:
                 }
         """
         for user in self._users:
-            if int(user['user_id']) == int(discord_user.id):
+            if int(user['id']) == int(discord_user.id):
                 user[key] += value
                 user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
                 return user
