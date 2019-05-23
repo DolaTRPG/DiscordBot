@@ -6,7 +6,7 @@ import googlesheet
 
 class Users:
     def __init__(self, google_spreadsheet_key):
-        self._columns = ["user_id", "points", "exp", "gm", "player", "points_used", "points_earned", "last_activity"]
+        self._columns = ["user_id", "name", "points", "exp", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
         print(self._users)
@@ -43,6 +43,7 @@ class Users:
             (dict) user information
                 {
                     "user_id": 0,
+                    "name": "username",
                     "points": 10,
                     "gm": 10,
                     "player": 3,
@@ -55,6 +56,7 @@ class Users:
         for key in self._columns:
             user[key] = 0
         user["user_id"] = int(discord_user.id)
+        user["name"] = discord_user.name
         self._users.append(user)
         return user
 
