@@ -60,6 +60,11 @@ async def on_message(message):
         elif message.content == "開團":
             await games.create(client, message, game_channel_id)
 
+        # save current progress into storage
+        elif message.content.startswith('!save'):
+            Users.write()
+            await message.channel.send("更新完成")
+
         else:
             response = "請輸入對應的指令：\n"
             response += "`點數`：查看你的點數\n"
@@ -67,11 +72,6 @@ async def on_message(message):
             await message.channel.send(response)
 
         busy_users.remove(message.author)
-
-    # save current progress into storage
-    if message.content.startswith('!save'):
-        Users.write()
-        await message.channel.send("更新完成")
 
 
 @client.event
