@@ -140,6 +140,8 @@ class Users:
         for user in self._users:
             if int(user['id']) == int(discord_user.id):
                 user[key] += value
+                if user[key] < 0:
+                    user[key] = 0
                 user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
                 return user
         else:
