@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import random
 import time
 
@@ -102,6 +103,7 @@ class Users:
         upgrade_exp = random.randint(0, current_level * 100)
         if upgrade_exp < user["exp"]:
             self._level_up(discord_user)
+            self.penalty()
             self.write()
             return True
         return False
@@ -147,3 +149,14 @@ class Users:
         else:
             user = self.add(discord_user)
             return user
+
+    def penalty(self):
+        """reduce points for idle players
+        Return:
+            - None
+        """
+        for user in self._users:
+            user_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
+            if user_activity < datetime.now() - timedelta(days=1):
+                user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
+                user['points'] -= 1 if user['points'] > 0 else 0
