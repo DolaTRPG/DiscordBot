@@ -158,5 +158,7 @@ class Users:
         for user in self._users:
             user_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
             if user_activity < datetime.now() - timedelta(days=1):
-                user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
-                user['points'] -= 1 if user['points'] > 0 else 0
+                if user['points'] > 0:
+                    user['points'] -= 1
+                    user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
+
