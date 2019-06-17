@@ -162,3 +162,27 @@ class Users:
                     user['points'] -= 1
                     user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
+    def get_abandoned_user_ids(self):
+        """users which does not appear anymore
+        Return:
+            - (list) user ids
+        """
+        abandoned_users = []
+        for user in self._users:
+            user_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
+            if user_activity < datetime.now() - timedelta(days=3):
+                abandoned_users.append(user['id'])
+        return abandoned_users
+
+    async def remove_abandoned_users(self, client, announcement_channel_id):
+        """remove abandoned users from database and send announcement message
+        Args:
+            (discord.client) client - discord client
+            (int) announcement_channel_id - discord channel for announcemnet
+        """
+        abandoned_users = self.get_abandoned_user_ids()
+        for user_id in abandoned_users:
+            user = client.get_user(int(user_id))
+            msg = "{} 已經成為幽靈離我們而去，我們懷念他".format(user.mention)
+            await client.get_channel(announcement_channel_id).send(msg)
+        self._users = [x for x in self._users if x['id'] not in abandoned_users]
