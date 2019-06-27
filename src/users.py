@@ -9,7 +9,7 @@ class Users:
     def __init__(self, google_spreadsheet_key, client, server_id):
         self._client = client
         self._server_id = server_id
-        self._columns = ["id", "name", "points", "exp", "gm", "points_earned", "player", "points_used", "last_activity"]
+        self._columns = ["id", "name", "points", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
 
@@ -87,40 +87,6 @@ class Users:
             if user['id'] == int(discord_user.id):
                 return user
         return None
-
-    def check_level_up(self, discord_user):
-        """check if exp is enough to level up
-        Args:
-            (Discord.User) discord user class
-        Return:
-            (True) user level up
-            (False) user did not level up
-            (None) user not exist
-        """
-        user = self.get(discord_user)
-        if not user:
-            return None
-        current_level = user["points"] + 1
-        upgrade_exp = random.randint(0, current_level * 100)
-        if upgrade_exp < user["exp"]:
-            self._level_up(discord_user)
-            self.penalty()
-            self.write()
-            return True
-        return False
-
-    def _level_up(self, discord_user):
-        """level up for user
-        Args:
-            (Discord.User) discord user class
-        Return:
-            (None)
-        """
-        for user in self._users:
-            if user["id"] == int(discord_user.id):
-                user["points"] += 1
-                user["exp"] = 0
-                return
 
     def increase_value(self, discord_user, key, value):
         """increase value for user

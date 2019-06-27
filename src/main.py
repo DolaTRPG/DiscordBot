@@ -40,8 +40,6 @@ async def on_message(message):
 
     # increase exp for public chat
     if not is_channel_type(message.channel, "DMChannel"):
-        Users.increase_value(message.author, "exp", len(message.content))
-        Users.check_level_up(message.author)
 
     # reaction in direct message
     if is_channel_type(message.channel, "DMChannel"):
