@@ -59,6 +59,7 @@ class Users:
             user[key] = 0
         user["id"] = int(discord_user.id)
         user["name"] = discord_user.name
+        user["last_activity"] = time.strftime('%Y-%m-%d %H:%M:%S')
         self._users.append(user)
         return user
 
