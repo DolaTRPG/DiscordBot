@@ -29,15 +29,16 @@ class Users:
                     user[key] = value
             self._users.append(user)
 
-    def write(self):
+    async def write(self):
         """output users into DB
         Return:
             (str) output worksheet name (e.g. users_20190101_123456)
         """
+        await self.ban_abandoned_users()
         worksheet_name = self._storage.write_data(self._users)
         return worksheet_name
 
-    def add(self, discord_user):
+    async def add(self, discord_user):
         """add new user
         Args:
             (Discord.User) discord user class
@@ -61,6 +62,7 @@ class Users:
         user["name"] = discord_user.name
         user["last_activity"] = time.strftime('%Y-%m-%d %H:%M:%S')
         self._users.append(user)
+        await self.write()
         return user
 
     def get(self, discord_user):

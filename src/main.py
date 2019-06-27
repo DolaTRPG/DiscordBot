@@ -61,8 +61,7 @@ async def on_message(message):
 
         # save current progress into storage
         elif message.content.startswith('!save'):
-            await Users.remove_abandoned_users(client, announcement_channel_id)
-            Users.write()
+            await Users.write()
             await message.channel.send("更新完成")
 
         else:
@@ -79,6 +78,7 @@ async def on_member_join(member):
     server = client.get_guild(game_server_id)
     role = discord.utils.get(server.roles, name=newcomer_role_name)
     await member.add_roles(role)
+    await Users.add(member)
 
 
 def is_channel_type(channel, class_name):
