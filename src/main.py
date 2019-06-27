@@ -13,7 +13,7 @@ game_channel_id = int(os.environ['discord_game_channel_id'])
 newcomer_role_name = os.environ['discord_newcomer_role_name']
 client = discord.Client()
 
-Users = users.Users(google_spreadsheet_key)
+Users = users.Users(google_spreadsheet_key, client, game_server_id)
 busy_users = []
 
 
@@ -40,8 +40,7 @@ async def on_message(message):
 
     # increase exp for public chat
     if not is_channel_type(message.channel, "DMChannel"):
-        Users.increase_value(message.author, "exp", len(message.content))
-        Users.check_level_up(message.author)
+        await Users.active(message.author)
 
     # reaction in direct message
     if is_channel_type(message.channel, "DMChannel"):
@@ -62,7 +61,7 @@ async def on_message(message):
 
         # save current progress into storage
         elif message.content.startswith('!save'):
-            Users.write()
+            await Users.write()
             await message.channel.send("更新完成")
 
         else:
@@ -75,21 +74,11 @@ async def on_message(message):
 
 
 @client.event
-async def on_message_delete(message):
-    # ignore action if happens in direct message
-    if is_channel_type(message.channel, "DMChannel"):
-        return
-
-    # decrease user points by 1 when delete message
-    Users.increase_value(message.author, "points", -1)
-    Users.write()
-
-
-@client.event
 async def on_member_join(member):
     server = client.get_guild(game_server_id)
     role = discord.utils.get(server.roles, name=newcomer_role_name)
     await member.add_roles(role)
+    await Users.add(member)
 
 
 def is_channel_type(channel, class_name):
