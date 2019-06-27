@@ -6,11 +6,12 @@ import googlesheet
 
 
 class Users:
-    def __init__(self, google_spreadsheet_key):
+    def __init__(self, google_spreadsheet_key, client, server_id):
+        self._client = client
+        self._server_id = server_id
         self._columns = ["id", "name", "points", "exp", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
-        print(self._users)
 
     def read(self):
         """load users from DB

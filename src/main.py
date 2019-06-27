@@ -14,7 +14,7 @@ announcement_channel_id = int(os.environ['discord_announcement_channel_id'])
 newcomer_role_name = os.environ['discord_newcomer_role_name']
 client = discord.Client()
 
-Users = users.Users(google_spreadsheet_key)
+Users = users.Users(google_spreadsheet_key, client, game_server_id)
 busy_users = []
 
 
