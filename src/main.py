@@ -77,17 +77,6 @@ async def on_message(message):
 
 
 @client.event
-async def on_message_delete(message):
-    # ignore action if happens in direct message
-    if is_channel_type(message.channel, "DMChannel"):
-        return
-
-    # decrease user points by 1 when delete message
-    Users.increase_value(message.author, "points", -1)
-    Users.write()
-
-
-@client.event
 async def on_member_join(member):
     server = client.get_guild(game_server_id)
     role = discord.utils.get(server.roles, name=newcomer_role_name)
