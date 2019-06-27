@@ -171,19 +171,15 @@ class Users:
         abandoned_users = []
         for user in self._users:
             user_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
-            if user_activity < datetime.now() - timedelta(days=3):
+            if user_activity < datetime.now() - timedelta(days=10):  # user inactive for 10 days will be listed as abandoned
                 abandoned_users.append(user['id'])
         return abandoned_users
 
-    async def remove_abandoned_users(self, client, announcement_channel_id):
+    async def ban_abandoned_users(self):
         """remove abandoned users from database and send announcement message
-        Args:
-            (discord.client) client - discord client
-            (int) announcement_channel_id - discord channel for announcemnet
         """
         abandoned_users = self.get_abandoned_user_ids()
         for user_id in abandoned_users:
-            user = client.get_user(int(user_id))
-            msg = "{} 已經成為幽靈離我們而去，我們懷念他".format(user.mention)
-            await client.get_channel(announcement_channel_id).send(msg)
+            discord_user = self._client.get_user(user_id)
+            await self._client.get_guild(self._server_id).ban(discord_user, reason="idle detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S')))
         self._users = [x for x in self._users if x['id'] not in abandoned_users]

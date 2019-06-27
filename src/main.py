@@ -10,7 +10,6 @@ token = os.environ['discord_token']
 google_spreadsheet_key = os.environ['google_spreadsheet_key']
 game_server_id = int(os.environ['discord_server_id'])
 game_channel_id = int(os.environ['discord_game_channel_id'])
-announcement_channel_id = int(os.environ['discord_announcement_channel_id'])
 newcomer_role_name = os.environ['discord_newcomer_role_name']
 client = discord.Client()
 
