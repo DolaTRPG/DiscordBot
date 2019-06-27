@@ -3,6 +3,7 @@ import discord
 import os
 import json
 
+import dice
 import users
 import games
 
@@ -38,7 +39,18 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # increase exp for public chat
+    if message.content.startswith("roll"):
+        dice_string = message.content.split(" ")[1]
+        dice_comment = " ".join(message.content.split(" ")[2:])
+        (total, rolls, modifier) = dice.roll(message.content.split(" ")[1])
+        response = "roll {}".format(dice_string)
+        if dice_comment:
+            response += " for {}".format(dice_comment)
+        response += "\n{} + ({}) = {}".format(rolls, int(modifier), total)
+        await message.channel.send(response)
+        return
+
+    # increase points for public chat
     if not is_channel_type(message.channel, "DMChannel"):
         await Users.active(message.author)
 
