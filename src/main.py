@@ -22,6 +22,7 @@ bot = commands.Bot(
     owner_id=559563649841233951
 )
 busy_users = []
+bot.add_cog(dice.Dice(bot))
 
 
 @bot.event
@@ -44,17 +45,6 @@ async def on_raw_reaction_add(event):
 async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
-        return
-
-    if message.content.startswith("roll"):
-        dice_string = message.content.split(" ")[1]
-        dice_comment = " ".join(message.content.split(" ")[2:])
-        (total, rolls, modifier) = dice.roll(message.content.split(" ")[1])
-        response = "roll {}".format(dice_string)
-        if dice_comment:
-            response += " for {}".format(dice_comment)
-        response += "\n{} + ({}) = {}".format(rolls, int(modifier), total)
-        await message.channel.send(response)
         return
 
     # increase points for public chat
