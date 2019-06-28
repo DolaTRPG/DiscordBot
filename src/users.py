@@ -17,6 +17,13 @@ class Users(commands.Cog, name="點數功能"):
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        server = self.bot.get_guild(self._server_id)
+        role = discord.utils.get(server.roles, name=self._newcomer_role_name)
+        await member.add_roles(role)
+        await self.add(member)
+
     def read(self):
         """load users from DB
         Return:

@@ -83,14 +83,6 @@ async def on_message(message):
         busy_users.remove(message.author)
 
 
-@client.event
-async def on_member_join(member):
-    server = client.get_guild(game_server_id)
-    role = discord.utils.get(server.roles, name=newcomer_role_name)
-    await member.add_roles(role)
-    await Users.add(member)
-
-
 def is_channel_type(channel, class_name):
     """check if channel is private
     Args:
