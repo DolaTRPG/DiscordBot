@@ -4,11 +4,15 @@ import time
 
 import googlesheet
 
+import discord
+from discord.ext import commands
 
-class Users:
-    def __init__(self, google_spreadsheet_key, client, server_id):
-        self._client = client
+
+class Users(commands.Cog, name="點數功能"):
+    def __init__(self, bot, google_spreadsheet_key, server_id, newcomer_role_name):
+        self.bot = bot
         self._server_id = server_id
+        self._newcomer_role_name = newcomer_role_name
         self._columns = ["id", "name", "points", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
@@ -165,6 +169,6 @@ class Users:
         """
         abandoned_users = self.get_abandoned_user_ids()
         for user_id in abandoned_users:
-            discord_user = self._client.get_user(user_id)
-            await self._client.get_guild(self._server_id).ban(discord_user, reason="idle detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S')))
+            discord_user = self.bot.get_user(user_id)
+            await self.bot.get_guild(self._server_id).ban(discord_user, reason="idle detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S')))
         self._users = [x for x in self._users if x['id'] not in abandoned_users]

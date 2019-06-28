@@ -14,7 +14,6 @@ game_server_id = int(os.environ['discord_server_id'])
 game_channel_id = int(os.environ['discord_game_channel_id'])
 newcomer_role_name = os.environ['discord_newcomer_role_name']
 
-Users = users.Users(google_spreadsheet_key, client, game_server_id)
 bot = commands.Bot(
     command_prefix=".",
     description="DolaTRPG discord bot",
@@ -22,6 +21,8 @@ bot = commands.Bot(
     owner_id=559563649841233951
 )
 busy_users = []
+
+bot.add_cog(users.Users(bot, google_spreadsheet_key, game_server_id, newcomer_role_name))
 bot.add_cog(dice.Dice(bot))
 
 
