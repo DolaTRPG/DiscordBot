@@ -1,5 +1,6 @@
 import asyncio
 import discord
+from discord.ext import commands
 import os
 import json
 
@@ -12,21 +13,27 @@ google_spreadsheet_key = os.environ['google_spreadsheet_key']
 game_server_id = int(os.environ['discord_server_id'])
 game_channel_id = int(os.environ['discord_game_channel_id'])
 newcomer_role_name = os.environ['discord_newcomer_role_name']
-client = discord.Client()
 
 Users = users.Users(google_spreadsheet_key, client, game_server_id)
+bot = commands.Bot(
+    command_prefix=".",
+    description="DolaTRPG discord bot",
+    self_bot=False,
+    owner_id=559563649841233951
+)
 busy_users = []
 
 
-@client.event
+@bot.event
 async def on_ready():
     print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
+    print(bot.user.name)
+    print(bot.user.id)
     print('------')
+    await bot.change_presence(activity=discord.Game(name='.help'))
 
 
-@client.event
+@bot.event
 async def on_raw_reaction_add(event):
     if event.channel_id == game_channel_id:
         message = await client.get_channel(event.channel_id).fetch_message(event.message_id)
@@ -104,4 +111,4 @@ def is_channel_type(channel, class_name):
     return False
 
 
-client.run(token)
+bot.run(token)
