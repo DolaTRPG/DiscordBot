@@ -42,6 +42,13 @@ class Users(commands.Cog, name="點數功能"):
                 user['points'] += 1
                 await self.write()
 
+    @commands.command(aliases=['points'])
+    async def point(self, ctx):
+        """查詢自己的跑團點數"""
+        user_info = self.get(ctx.author)
+        response = "你目前的點數為：{}".format(user_info["points"])
+        await ctx.send(response)
+
     def read(self):
         """load users from DB
         Return:
