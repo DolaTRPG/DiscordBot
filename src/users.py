@@ -186,5 +186,8 @@ class Users(commands.Cog, name="點數功能"):
         abandoned_users = self.get_abandoned_user_ids()
         for user_id in abandoned_users:
             discord_user = self.bot.get_user(user_id)
+            if not discord_user:
+                # user already left server
+                continue
             await self.bot.get_guild(self._server_id).ban(discord_user, reason="idle detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S')))
         self._users = [x for x in self._users if x['id'] not in abandoned_users]
