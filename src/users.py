@@ -24,6 +24,24 @@ class Users(commands.Cog, name="點數功能"):
         await member.add_roles(role)
         await self.add(member)
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """user takes action in discord server
+        Args:
+            (Discord.User) discord user class
+        """
+        discord_user = message.author
+        user = self.get(discord_user)
+        if not user:
+            self.add(discord_user)
+        else:
+            last_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
+            if last_activity < datetime.now() - timedelta(hours=12):
+                # user can get points for every 12 hours
+                user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
+                user['points'] += 1
+                await self.write()
+
     def read(self):
         """load users from DB
         Return:
@@ -101,22 +119,6 @@ class Users(commands.Cog, name="點數功能"):
             if user['id'] == int(discord_user.id):
                 return user
         return None
-
-    async def active(self, discord_user):
-        """user takes action in discord server
-        Args:
-            (Discord.User) discord user class
-        """
-        user = self.get(discord_user)
-        if not user:
-            self.add(discord_user)
-            return
-        last_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
-        if last_activity < datetime.now() - timedelta(hours=12):
-            # user can get points for every 12 hours
-            user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
-            user['points'] += 1
-            await self.write()
 
     def increase_value(self, discord_user, key, value):
         """increase value for user

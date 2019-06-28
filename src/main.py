@@ -48,10 +48,6 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # increase points for public chat
-    if not is_channel_type(message.channel, "DMChannel"):
-        await Users.active(message.author)
-
     # reaction in direct message
     if is_channel_type(message.channel, "DMChannel"):
         # avoid additional actions if user is already busy
