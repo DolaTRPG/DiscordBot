@@ -3,6 +3,7 @@ import random
 import re
 import time
 
+import configurations
 import googlesheet
 
 import discord
@@ -10,10 +11,10 @@ from discord.ext import commands
 
 
 class Users(commands.Cog, name="點數功能"):
-    def __init__(self, bot, google_spreadsheet_key, server_id, newcomer_role_name):
+    def __init__(self, bot, google_spreadsheet_key):
         self.bot = bot
-        self._server_id = server_id
-        self._newcomer_role_name = newcomer_role_name
+        self._server_id = int(configurations.key['server'])
+        self._newcomer_role_name = configurations.key['newcomer_role']
         self._columns = ["id", "name", "points", "gm", "points_earned", "player", "points_used", "last_activity"]
         self._storage = googlesheet.Storage(google_spreadsheet_key, "users", self._columns)
         self.read()
