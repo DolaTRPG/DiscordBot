@@ -162,47 +162,6 @@ class Users(commands.Cog, name="點數功能"):
                 return user
         return None
 
-    def increase_value(self, discord_user, key, value):
-        """increase value for user
-        Args:
-            (Discord.User) discord user class
-            (str) key -- key to update
-            (int) value -- increase value
-        Return:
-            (dict) user information
-                {
-                    "id": 0,
-                    "points": 10,
-                    "gm": 10,
-                    "player": 3,
-                    "points_used": 100,
-                    "points_earned": 100,
-                    "exp": 0
-                }
-        """
-        for user in self._users:
-            if int(user['id']) == int(discord_user.id):
-                user[key] += value
-                if user[key] < 0:
-                    user[key] = 0
-                user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
-                return user
-        else:
-            user = self.add(discord_user)
-            return user
-
-    def penalty(self):
-        """reduce points for idle players
-        Return:
-            - None
-        """
-        for user in self._users:
-            user_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
-            if user_activity < datetime.now() - timedelta(days=1):
-                if user['points'] > 0:
-                    user['points'] -= 1
-                    user['last_activity'] = time.strftime('%Y-%m-%d %H:%M:%S')
-
     def get_abandoned_user_ids(self):
         """users which does not appear anymore
         Return:
