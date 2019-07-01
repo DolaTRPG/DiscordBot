@@ -126,6 +126,10 @@ class Users(commands.Cog, name="點數功能"):
                     "exp": 0
                 }
         """
+        if discord_user.id == self.bot.user.id:
+            # avoid adding bot into database
+            return
+
         user = {}
         for key in self._columns:
             user[key] = 0
