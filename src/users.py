@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import random
+import re
 import time
 
 import googlesheet
@@ -45,9 +46,42 @@ class Users(commands.Cog, name="點數功能"):
     @commands.command(aliases=['points'])
     async def point(self, ctx):
         """查詢自己的跑團點數"""
-        user_info = self.get(ctx.author)
-        response = "你目前的點數為：{}".format(user_info["points"])
+        user = self.get(ctx.author)
+        response = "你目前的點數為：{}".format(user["points"])
         await ctx.send(response)
+
+    @commands.command()
+    async def donate(self, ctx, *args):
+        """贈與點數給其他人
+
+        範例：
+        give @DolaTRPG 10
+        give @DolaTRPG 10 轉讓理由"""
+        user = self.get(ctx.author)
+        target_parsed = re.findall('^<@!?(\d+)>$', args[0])
+        if not target_parsed:
+            await ctx.send("目標不存在")
+            return
+        target_discord_user = self.bot.get_user(int(target_parsed[0]))
+        target_user = self.get(target_discord_user)
+
+        points = int(args[1])
+        if user["points"] < points:
+            # not enough points
+            await ctx.send("你持有的點數({})不夠贈與({})".format(user['points'], points))
+            return
+
+        # points transition
+        user['points'] -= points
+        target_user['points'] += points
+
+        # notify users
+        await ctx.author.send("已轉讓 {} 點給 {}，你的剩餘點數為 {}".format(points, target_discord_user.name, user['points']))
+        await target_discord_user.send("{} 轉讓 {} 點給你，你的現有點數為 {}".format(ctx.author.name, points, target_user['points']))
+        comment = " ".join(args[2:])
+        if comment:
+            await target_discord_user.send("轉讓理由：{}".format(comment))
+        await self.write()
 
     def read(self):
         """load users from DB
