@@ -35,7 +35,7 @@ class Users(commands.Cog, name="點數功能"):
         discord_user = message.author
         user = self.get(discord_user)
         if not user:
-            self.add(discord_user)
+            await self.add(discord_user)
         else:
             last_activity = datetime.strptime(user['last_activity'], '%Y-%m-%d %H:%M:%S')
             if last_activity < datetime.now() - timedelta(hours=12):
@@ -153,10 +153,6 @@ class Users(commands.Cog, name="點數功能"):
                     "exp": 0
                 }
         """
-        ids = [u['id'] for u in self._users]
-        if discord_user.id not in ids:
-            self.add(discord_user)
-
         for user in self._users:
             if user['id'] == int(discord_user.id):
                 return user
