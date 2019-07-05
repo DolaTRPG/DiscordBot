@@ -4,6 +4,7 @@ from discord.ext import commands
 import os
 import json
 
+import channel
 import configurations
 import dice
 import users
@@ -21,6 +22,7 @@ bot = commands.Bot(
 )
 
 bot.add_cog(users.Users(bot, google_spreadsheet_key))
+bot.add_cog(channel.Channel(bot))
 bot.add_cog(dice.Dice(bot))
 
 
