@@ -38,6 +38,23 @@ class Users(commands.Cog, name="點數功能"):
             if user.activity_at < int(time.time()) - (12 * 3600):
                 # user can get points for every 12 hours
                 db_user.update(user.id, activity_at=time.time(), point=user.point + 1)
+                await self.ban_abandoned_users()
+
+    @commands.command()
+    @commands.is_owner()
+    async def edit(self, ctx, *args):
+        """(管理者功能)修改使用者資料
+
+        範例：
+        edit @DolaTRPG point 10
+        """
+        target_parsed = re.findall('^<@!?(\d+)>$', args[0])
+        if not target_parsed:
+            await ctx.send("目標不存在，請在伺服器內執行此指令")
+            return
+        target_discord_user = self.bot.get_user(int(target_parsed[0]))
+        update_item = {args[1]: int(args[2])}
+        db_user.update(target_discord_user.id, **update_item)
 
     @commands.command(aliases=['points'])
     async def point(self, ctx):
