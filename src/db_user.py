@@ -22,17 +22,17 @@ class User(Base):
     activity_at = Column(Integer, default=int(time.time()))
     gm = Column(Integer, default=0)
     earn = Column(Integer, default=0)
-    used = Column(Integer, default=0)
+    use = Column(Integer, default=0)
 
 Base.metadata.create_all(engine)
 
 
-def add(uid: int, name: str) -> User:
-    if uid == 234835249094197250:
+def add(**kwargs) -> User:
+    if kwargs.get('id') == 234835249094197250:
         # avoid adding bot into database
         return
-
-    user = User(id=uid, name=name)
+    params = dict((k, v) for k, v in kwargs.items())
+    user = User(**params)
     session = Session()
     try:
         session.add(user)
@@ -45,11 +45,10 @@ def add(uid: int, name: str) -> User:
     return user
 
 
-def get(uids: [int]) -> User:
+def get(id: int) -> User:
     session = Session()
-    users = session.query(User).filter(User.id.in_(uids)).all()
-    session.close()
-    return users
+    user = session.query(User).filter_by(id=id).first()
+    return user
 
 
 def get_inactive(delta_seconds: int) -> [User]:
@@ -64,14 +63,14 @@ def get_inactive(delta_seconds: int) -> [User]:
     return users
 
 
-def update(uid: int, **kwargs) -> User:
+def update(id: int, **kwargs) -> User:
     session = Session()
     update_content = {}
     for key in kwargs:
         update_content[key] = kwargs[key]
 
     try:
-        user = session.query(User).filter(User.id == uid).update(update_content)
+        user = session.query(User).filter(User.id == id).update(update_content)
         session.commit()
     except:
         session.rollback()
@@ -81,10 +80,10 @@ def update(uid: int, **kwargs) -> User:
     return user
 
 
-def remove(uid: int) -> None:
+def remove(id: int) -> None:
     session = Session()
     try:
-        user = session.query(User).filter(User.id == uid).first()
+        user = session.query(User).filter(User.id == id).first()
         session.delete(user)
         session.commit()
     except:

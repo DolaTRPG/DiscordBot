@@ -22,7 +22,7 @@ class Users(commands.Cog, name="點數功能"):
         server = self.bot.get_guild(self._server_id)
         role = discord.utils.get(server.roles, name=self._newcomer_role_name)
         await member.add_roles(role)
-        db_user.add(member.id, member.name)
+        db_user.add(id=member.id, name=member.name)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -31,14 +31,15 @@ class Users(commands.Cog, name="點數功能"):
             (Discord.User) discord user class
         """
         discord_user = message.author
-        user = db_user.get([discord_user.id])[0]
+        user = db_user.get(discord_user.id)
         if not user:
-            db_user.add(discord_user.id, discord_user.name)
-        else:
-            if user.activity_at < int(time.time()) - (12 * 3600):
-                # user can get points for every 12 hours
-                db_user.update(user.id, activity_at=time.time(), point=user.point + 1)
-                await self.ban_abandoned_users()
+            # add user if not exist
+            db_user.add(id=discord_user.id, name=discord_user.name)
+            return
+        if user.activity_at < int(time.time()) - (12 * 3600):
+            # user can get points for every 12 hours
+            db_user.update(user.id, activity_at=time.time(), point=user.point + 1)
+            await self.ban_abandoned_users()
 
     @commands.command()
     @commands.is_owner()
@@ -59,7 +60,7 @@ class Users(commands.Cog, name="點數功能"):
     @commands.command(aliases=['points'])
     async def point(self, ctx):
         """查詢自己的跑團點數"""
-        user = db_user.get([ctx.author.id])[0]
+        user = db_user.get(ctx.author.id)
         response = "你目前的點數為：{}".format(user.point)
         await ctx.send(response)
 
@@ -70,13 +71,13 @@ class Users(commands.Cog, name="點數功能"):
         範例：
         give @DolaTRPG 10
         give @DolaTRPG 10 轉讓理由"""
-        user = db_user.get([ctx.author.id])[0]
+        user = db_user.get(ctx.author.id)
         target_parsed = re.findall('^<@!?(\d+)>$', args[0])
         if not target_parsed:
             await ctx.send("目標不存在，請在伺服器內執行此指令")
             return
         target_discord_user = self.bot.get_user(int(target_parsed[0]))
-        target_user = db_user.get([target_discord_user.id])[0]
+        target_user = db_user.get(target_discord_user.id)
 
         donate_point = int(args[1])
         if user.point < donate_point:
