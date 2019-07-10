@@ -23,6 +23,7 @@ bot = commands.Bot(
 
 bot.add_cog(users.Users(bot, google_spreadsheet_key))
 bot.add_cog(channel.Channel(bot))
+bot.add_cog(games.Games(bot))
 bot.add_cog(dice.Dice(bot))
 
 
