@@ -9,6 +9,7 @@ import googlesheet
 import db_user
 import discord
 from discord.ext import commands
+import util
 
 
 class Users(commands.Cog, name="點數功能"):
@@ -66,7 +67,7 @@ class Users(commands.Cog, name="點數功能"):
 
     @commands.command()
     async def donate(self, ctx, *args):
-        """贈與點數給其他人
+        """轉讓點數給其他人
 
         範例：
         give @DolaTRPG 10
@@ -82,7 +83,7 @@ class Users(commands.Cog, name="點數功能"):
         donate_point = int(args[1])
         if user.point < donate_point:
             # not enough points
-            await ctx.send("你持有的點數({})不夠贈與({})".format(user.point, donate_point))
+            await ctx.send("你持有的點數({})不夠轉讓({})".format(user.point, donate_point))
             return
 
         # points transition
@@ -90,11 +91,12 @@ class Users(commands.Cog, name="點數功能"):
         db_user.update(target_user.id, point=target_user.point + donate_point)
 
         # notify users
-        await ctx.author.send("已轉讓 {} 點給 {}，你的剩餘點數為 {}".format(donate_point, target_discord_user.name, user.point - donate_point))
-        await target_discord_user.send("{} 轉讓 {} 點給你，你的現有點數為 {}".format(ctx.author.name, donate_point, target_user.point + donate_point))
+        await ctx.author.send("已轉讓 {} 點給 {}，你的剩餘點數為 {}".format(donate_point, target_discord_user.mention, user.point - donate_point))
+        await target_discord_user.send("{} 轉讓 {} 點給你，你的現有點數為 {}".format(ctx.author.mention, donate_point, target_user.point + donate_point))
         comment = " ".join(args[2:])
         if comment:
             await target_discord_user.send("轉讓理由：{}".format(comment))
+        await util.log(self.bot, "轉讓點數：{}->{}, 點數：{}".format(ctx.author.mention, target_discord_user.mention, donate_point))
 
     async def ban_abandoned_users(self):
         """remove abandoned users from database and send announcement message
@@ -106,4 +108,6 @@ class Users(commands.Cog, name="點數功能"):
             if not discord_user:
                 # user already left server
                 continue
-            await self.bot.get_guild(self._server_id).ban(discord_user, reason="inactive detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S')))
+            reason = "inactive detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S'))
+            await util.log(self.bot, reason)
+            await self.bot.get_guild(self._server_id).ban(discord_user, reason=reason)

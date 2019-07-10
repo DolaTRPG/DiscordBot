@@ -1,4 +1,12 @@
 import configurations
+import requests
+
+
+async def log(bot, content):
+    """send log to log channel
+    """
+    log_channel = configurations.key['log_channel']
+    await bot.get_channel(int(log_channel)).send(content)
 
 
 def create_gist(filename, description, content):
@@ -10,7 +18,6 @@ def create_gist(filename, description, content):
     Return:
         - (str) html url for this gist
     """
-    import requests
     request_payload = {
         'description': description,
         'public': False,
