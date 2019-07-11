@@ -57,7 +57,6 @@ class Games(commands.Cog, name="開團功能"):
     async def start(self, message):
         if message.edited_at is not None:
             # take no action for edited message
-            await util.log(self.bot, "該團({})已收".format(message.id))
             return
         gm = message.mentions[0]
         start_flag = False
@@ -93,29 +92,19 @@ class Games(commands.Cog, name="開團功能"):
             game_point = int(parse_message(message.content, "開團時酌收 (\d+) 點跑團點數"))
             game_title = parse_message(message.content, " 要開團囉\((.*)\)!!\n")
             await util.log(self.bot, "團名：{}, 點數：{}".format(game_title, game_point))
+            await util.log(self.bot, "團名：{}, 報名者：{}".format(game_title, [p.mention for p in players]))
 
-            # check if player has enough point
-            player_point = {}
-            for du in players:
-                user = db_user.get(id=du.id)
-                if user.point < game_point:
-                    # ignore players with not enough point
-                    await util.log(self.bot, "團名：{}, 玩家移除：{}, 理由：點數不足".format(game_title, du.mention))
-                    await send_direct_message(du, "{} 的 {} 報名截止，你因為點數不足而被移出玩家清單".format(gm.mention, game_title))
-                    continue
-                player_point[du] = user.point
+            # valid player by points
+            valid_players = db_user.get_game_players(ids=[p.id for p in players], required_points=game_point, player_count=player_count)
+            valid_player_ids = [p.id for p in valid_players]
+            players = [p for p in players if p.id in valid_player_ids]
 
-            # sort players by point
-            players = sorted(player_point.items(), key=lambda x: x[1], reverse=True)
-            players = [p[0] for p in players]
-
-            # filter number of players
-            await util.log(self.bot, "團名：{}, 玩家人數：{}, 玩家：{}".format(game_title, len(players), [p.mention for p in players]))
+            # verify number of players
+            await util.log(self.bot, "團名：{}, 目標人數：{}, 成團玩家：{}".format(game_title, player_count, [p.mention for p in players]))
             if len(players) < player_count:
                 await message.channel.send("{} 的 {} 因為人數不足而流團".format(gm.mention, game_title))
                 await message.edit(content=message.content + "\n（流團）")
                 return
-            players = players[:player_count]
 
             # start successfully
             player_mentions = [du.mention for du in players]

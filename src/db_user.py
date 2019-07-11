@@ -89,3 +89,12 @@ def remove(id: int) -> None:
         raise
     finally:
         session.close()
+
+
+def get_game_players(ids: [int], required_points: int, player_count: int) -> [User]:
+    """find players with enough points, and sort by points
+    """
+    session = Session()
+    users = session.query(User).filter(User.point >= required_points).order_by(User.point.desc()).limit(player_count).all()
+    session.close()
+    return users
