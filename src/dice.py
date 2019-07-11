@@ -19,7 +19,7 @@ class Dice(commands.Cog, name="骰子功能"):
             dice_string = args[0]
             dice_comment = " ".join(args[1:])
             (total, rolls, modifier) = self._roll(dice_string)
-            response = "roll {}".format(dice_string)
+            response = "{}\nroll {}".format(ctx.author.mention, dice_string)
             if dice_comment:
                 response += " ({})".format(dice_comment)
             response += "\n{} + ({}) = {}".format(rolls, int(modifier), total)
