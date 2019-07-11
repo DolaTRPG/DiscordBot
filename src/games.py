@@ -19,7 +19,6 @@ class Games(commands.Cog, name="開團功能"):
             message = await self.bot.get_channel(event.channel_id).fetch_message(event.message_id)
             if event.user_id == message.mentions[0].id:
                 # trigger only if gm click on reaction
-                await util.log(self.bot, "GM({}) 點了開團公告".format(message.mentions[0].mention))
                 await self.start(message)
 
     @commands.command()
