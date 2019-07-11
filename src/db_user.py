@@ -95,6 +95,6 @@ def get_game_players(ids: [int], required_points: int, player_count: int) -> [Us
     """find players with enough points, and sort by points
     """
     session = Session()
-    users = session.query(User).filter(User.point >= required_points).order_by(User.point.desc()).limit(player_count).all()
+    users = session.query(User).filter(User.id.in_(ids)).filter(User.point >= required_points).order_by(User.point.desc()).limit(player_count).all()
     session.close()
     return users
