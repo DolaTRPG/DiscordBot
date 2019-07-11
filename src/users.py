@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import random
 import re
-import time
 
 import configurations
 import googlesheet
@@ -37,9 +36,9 @@ class Users(commands.Cog, name="點數功能"):
             # add user if not exist
             db_user.add(id=discord_user.id, name=discord_user.name)
             return
-        if user.activity_at < int(time.time()) - (12 * 3600):
+        if user.activity_at < datetime.utcnow() - timedelta(hours=12):
             # user can get points for every 12 hours
-            db_user.update(user.id, activity_at=time.time(), point=user.point + 1)
+            db_user.update(user.id, activity_at=datetime.utcnow(), point=user.point + 1)
             await self.ban_abandoned_users()
 
     @commands.command()
@@ -101,13 +100,13 @@ class Users(commands.Cog, name="點數功能"):
     async def ban_abandoned_users(self):
         """remove abandoned users from database and send announcement message
         """
-        abandoned_users = db_user.get_inactive(10 * 24 * 3600)  # user inactive for 10 days will be listed as abandoned
+        abandoned_users = db_user.get_inactive(days=10)  # user inactive for 10 days will be listed as abandoned
         for user in abandoned_users:
             db_user.remove(user.id)
             discord_user = self.bot.get_user(user.id)
             if not discord_user:
                 # user already left server
                 continue
-            reason = "inactive detected at {}".format(time.strftime('%Y-%m-%d %H:%M:%S'))
-            await util.log(self.bot, reason)
+            reason = "inactive detected at {}".format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
+            await util.log(self.bot, "封鎖：{}, 原因：{}".format(discord_user.mention, reason))
             await self.bot.get_guild(self._server_id).ban(discord_user, reason=reason)

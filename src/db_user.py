@@ -1,7 +1,8 @@
+from datetime import datetime, timedelta
 import os
 import time
 
-from sqlalchemy import Column, BigInteger, Integer, String, create_engine
+from sqlalchemy import Column, BigInteger, Integer, String, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -19,7 +20,7 @@ class User(Base):
     id = Column(BigInteger, primary_key=True)
     name = Column(String(32))
     point = Column(Integer, default=0)
-    activity_at = Column(Integer, default=int(time.time()))
+    activity_at = Column(DateTime, default=datetime.utcnow)
     gm = Column(Integer, default=0)
     earn = Column(Integer, default=0)
     use = Column(Integer, default=0)
@@ -51,10 +52,11 @@ def get(id: int) -> User:
     return user
 
 
-def get_inactive(delta_seconds: int) -> [User]:
+def get_inactive(**kwargs) -> [User]:
     session = Session()
     try:
-        users = session.query(User).filter(User.activity_at < int(time.time()) - delta_seconds).all()
+        inactive_period = timedelta(**kwargs)
+        users = session.query(User).filter(User.activity_at < datetime.utcnow() - inactive_period).all()
     except:
         session.rollback()
         raise
@@ -65,12 +67,8 @@ def get_inactive(delta_seconds: int) -> [User]:
 
 def update(id: int, **kwargs) -> User:
     session = Session()
-    update_content = {}
-    for key in kwargs:
-        update_content[key] = kwargs[key]
-
     try:
-        user = session.query(User).filter(User.id == id).update(update_content)
+        user = session.query(User).filter(User.id == id).update(kwargs)
         session.commit()
     except:
         session.rollback()
