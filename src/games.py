@@ -1,155 +1,143 @@
 import asyncio
 import re
 
+import configurations
 
-async def create(client, message, game_channel_id):
-    """create new game on discord
-    Args:
-        (discord.client) client - discord client
-        (discord.message) message - discord message
-        (int) game_channel_id - discord channel for announcemnet
-    """
-    dm_channel = message.channel
-
-    def check_message(m):
-        return m.author == message.author and m.channel == dm_channel
-
-    game = {}
-    await dm_channel.send("請輸入跑團時間：")
-    message = await client.wait_for('message', check=check_message)
-    game["time"] = message.content
-
-    await dm_channel.send("請輸入劇本名稱：")
-    message = await client.wait_for('message', check=check_message)
-    game["name"] = message.content
-
-    await dm_channel.send("請輸入玩家人數：")
-    message = await client.wait_for('message', check=check_message)
-    game["player_count"] = message.content
-    try:
-        assert(int(game["player_count"]) > 0)
-    except:
-        await dm_channel.send("玩家人數必須是正整數")
-        await dm_channel.send("已取消")
-        return
-
-    await dm_channel.send("請輸入團務長度：")
-    message = await client.wait_for('message', check=check_message)
-    game["length"] = message.content
-
-    await dm_channel.send("請輸入簡介：")
-    message = await client.wait_for('message', check=check_message)
-    game["description"] = message.content
-
-    await dm_channel.send("請輸入點數需求：")
-    message = await client.wait_for('message', check=check_message)
-    game["point"] = message.content
-    try:
-        assert(int(game["point"]) >= 0)
-    except:
-        await dm_channel.send("點數需求必須 >= 0")
-        await dm_channel.send("已取消")
-        return
-
-    final_message = """
-{} 要開團囉!!
-```
-時間：{}
-劇本：{}
-人數：{}
-長度：{}
-簡介：
-{}
-```
-
-想要參加的玩家請點 🆙（開團時酌收 {} 點跑團點數）
-主持人收團請點 🈵
-    """.format(message.author.mention, game['time'], game['name'], game['player_count'], game['length'], game['description'], game['point'])
-
-    await dm_channel.send(final_message)
-    await dm_channel.send("請確認以上訊息(y/n)：")
-    message = await client.wait_for('message', check=check_message)
-    if message.content not in ["y", "Y", "yes", "Yes", "YES"]:
-        await dm_channel.send("已取消")
-        return
-    message = await client.get_channel(game_channel_id).send(final_message)
-    emojis = ['🆙', '🈵']
-    for emoji in emojis:
-        await message.add_reaction(emoji)
+import db_user
+from discord.ext import commands
+import util
 
 
-async def start(client, message, users):
-    """start game on discord
-    Args:
-        (discord.client) client - discord client
-        (discord.message) message - discord message
-        (users.Users) users - user class
-    """
-    if message.author != client.user:
-        return
-    if message.edited_at is not None:
-        # take no action for edited message
-        return
-    gm = message.mentions[0]
-    start_flag = False
+class Games(commands.Cog, name="開團功能"):
+    def __init__(self, bot):
+        self.bot = bot
+        self._announcement_channel = int(configurations.key['game_announce_channel'])
 
-    # collect player list
-    players = []
-    for reaction in message.reactions:
-        async for user in reaction.users():
-            if reaction.emoji == '🆙':
-                players.append(user)
-            elif reaction.emoji == '🈵':
-                if user == gm:
-                    start_flag = True
-    players.remove(client.user)
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, event):
+        if event.channel_id == self._announcement_channel:
+            message = await self.bot.get_channel(event.channel_id).fetch_message(event.message_id)
+            if event.user_id == message.mentions[0].id:
+                # trigger only if gm click on reaction
+                await util.log(self.bot, "GM({}) 點了開團公告".format(message.mentions[0].mention))
+                await self.start(message)
 
-    if start_flag:
-        # filter player by gm setting
-        game_title = parse_message(message.content, "劇本：(.+)\n")
-        game_points = int(parse_message(message.content, "開團時酌收 (\d+) 點跑團點數"))
-        total_points = 0
-        player_count = int(parse_message(message.content, "人數：(\d+)"))
+    @commands.command()
+    async def create(self, ctx, *args):
+        """發起新的團務
 
-        # sort player by points
-        for p in players:
-            if users.get(p)['points'] < game_points:
-                await send_direct_message(p, "{} 的 {} 團報名截止，你因為點數不足而被移出玩家清單".format(gm.name, game_title))
-        players = [p for p in players if users.get(p)['points'] > game_points]
-        players = sorted(players, key=lambda p: users.get(p)['points'], reverse=True)
-        players = players[:player_count]
+        使用方式：
+        create <團名> <跑團收取點數(每人)> "<跑團須知>"
 
-        # check requirements
-        if len(players) < player_count:
-            await message.channel.send("{} 的 {} 團因為人數不足而流團".format(gm.mention, game_title))
-            await message.edit(content=message.content + "\n（流團）")
+        範例：
+        create 測試用的團 10
+        "
+        這是跑團須知的第一行
+        這是第二行
+        "
+        """
+
+        content = args[2]
+        template = "{} 要開團囉({})!!\n{}\n想要參加的玩家請點 🆙（開團時酌收 {} 點跑團點數）\n主持人收團請點選玩家人數(1~6)".format(ctx.author.mention, args[0], content, args[1])
+
+        def check_message(m):
+            return m.author == ctx.author and m.channel == ctx.author.dm_channel
+
+        await ctx.author.send(template)
+        await ctx.author.send("請確認以上訊息(y/n)：")
+        message = await self.bot.wait_for('message', check=check_message)
+        if message.content not in ["y", "Y", "yes", "Yes", "YES"]:
+            await ctx.author.send("已取消")
             return
+        message = await self.bot.get_channel(self._announcement_channel).send(template)
+        emojis = ['🆙', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣']
+        for emoji in emojis:
+            await message.add_reaction(emoji)
 
-        # start successfully
-        player_mentions = [p.mention for p in players]
-        await message.channel.send("{} 的 {} 團已收團\n玩家：{}".format(gm.mention, game_title, " ".join(player_mentions)))
+    async def start(self, message):
+        if message.edited_at is not None:
+            # take no action for edited message
+            await util.log(self.bot, "該團({})已收".format(message.id))
+            return
+        gm = message.mentions[0]
+        start_flag = False
 
-        # send dm to each players
-        for p in players:
-            await send_direct_message(p, "恭喜入選 {} 的 {} 團".format(gm.name, game_title))
-            points_before = users.get(p)['points']
-            users.increase_value(p, 'player', 1)
-            users.increase_value(p, 'points_used', game_points)
-            users.increase_value(p, 'points', 0 - game_points)
-            points_after = users.get(p)['points']
-            await send_direct_message(p, "點數：{} -> {}".format(points_before, points_after))
-            total_points += game_points
+        # collect player list
+        players = []
+        for reaction in message.reactions:
+            async for user in reaction.users():
+                if reaction.emoji == '🆙':
+                    players.append(user)
+                elif reaction.emoji in ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣']:
+                    if user.id != gm.id:
+                        # ignore non-gm reactions
+                        continue
+                    start_flag = True
+                    if reaction.emoji == '1⃣':
+                        player_count = 1
+                    elif reaction.emoji == '2⃣':
+                        player_count = 2
+                    elif reaction.emoji == '3⃣':
+                        player_count = 3
+                    elif reaction.emoji == '4⃣':
+                        player_count = 4
+                    elif reaction.emoji == '5⃣':
+                        player_count = 5
+                    elif reaction.emoji == '6⃣':
+                        player_count = 6
+        players.remove(self.bot.user)  # remove bot user
 
-        # send dm to gm
-        await send_direct_message(gm, "開團成功，玩家：{}".format(",".join([p.name for p in players])))
-        points_before = users.get(gm)['points']
-        users.increase_value(gm, 'gm', 1)
-        users.increase_value(gm, 'points_earned', game_points)
-        users.increase_value(gm, 'points', game_points)
-        points_after = users.get(gm)['points']
-        await send_direct_message(gm, "點數：{} -> {}".format(points_before, points_after))
-        await message.edit(content=message.content + "\n（已收團）")
-        users.write()
+        if start_flag:
+            await util.log(self.bot, "正在開團({})".format(message.id))
+            # filter player by gm setting
+            game_point = int(parse_message(message.content, "開團時酌收 (\d+) 點跑團點數"))
+            game_title = parse_message(message.content, " 要開團囉\((.*)\)!!\n")
+            await util.log(self.bot, "團名：{}, 點數：{}".format(game_title, game_point))
+
+            # check if player has enough point
+            player_point = {}
+            for du in players:
+                user = db_user.get(id=du.id)
+                if user.point < game_point:
+                    # ignore players with not enough point
+                    await util.log(self.bot, "團名：{}, 玩家移除：{}, 理由：點數不足".format(game_title, du.mention))
+                    await send_direct_message(du, "{} 的 {} 報名截止，你因為點數不足而被移出玩家清單".format(gm.mention, game_title))
+                    continue
+                player_point[du] = user.point
+
+            # sort players by point
+            players = sorted(player_point.items(), key=lambda x: x[1], reverse=True)
+            players = [p[0] for p in players]
+
+            # filter number of players
+            await util.log(self.bot, "團名：{}, 玩家人數：{}, 玩家：{}".format(game_title, len(players), [p.mention for p in players]))
+            if len(players) < player_count:
+                await message.channel.send("{} 的 {} 因為人數不足而流團".format(gm.mention, game_title))
+                await message.edit(content=message.content + "\n（流團）")
+                return
+            players = players[:player_count]
+
+            # start successfully
+            player_mentions = [du.mention for du in players]
+            await message.channel.send("{} 的 {} 已收團\n玩家：{}".format(gm.mention, game_title, " ".join(player_mentions)))
+
+            # send dm to players
+            for du in players:
+                user = db_user.get(du.id)
+                db_user.update(du.id, point=user.point - game_point, use=user.use + game_point)
+                await send_direct_message(du, "恭喜入選 {} 的 {} ".format(gm.name, game_title))
+                await send_direct_message(du, "使用點數 {}，剩餘點數：{}".format(game_point, user.point - game_point))
+
+            # send dm to gm
+            user = db_user.get(gm.id)
+            total_point = int(game_point) * len(players)
+            db_user.update(gm.id, point=user.point + total_point, earn=user.earn + total_point)
+            await send_direct_message(gm, "開團成功，玩家：{}".format(",".join([p.name for p in players])))
+            await send_direct_message(gm, "獲得點數 {}，合計點數：{}".format(total_point, user.point + total_point))
+
+            # edit original message
+            await message.edit(content=message.content + "\n（已收團）")
+            users.write()
 
 
 def parse_message(content, pattern):
