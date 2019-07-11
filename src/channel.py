@@ -11,7 +11,7 @@ class Channel(commands.Cog, name="頻道管理"):
     @commands.command()
     @commands.is_owner()
     async def backup(self, ctx, *args):
-        """備份文字頻道
+        """(管理者功能)備份文字頻道
 
         使用範例：
         backup
